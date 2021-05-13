@@ -1,15 +1,15 @@
 import pygame
 import os
+import sys
 
-pygame.font.init()
-pygame.mixer.init()
+pygame.init()
 
-###### CONSTANTS #######
+""" CONSTANTS """
 
 WIDTH, HEIGHT = 900, 500
 
 WHITE = (255,255,255)
-BLACK = (0,0,0)
+BLACK = (20,20,20)
 RED = (255,0,0)
 YELLOW = (255,255,0)
 
@@ -27,26 +27,46 @@ RED_HIT = pygame.USEREVENT + 2          # user 2 event
 
 BORDER = pygame.Rect(WIDTH//2 - 5, 0, 10, HEIGHT)
 
-BULLET_HIT_SOUND = pygame.mixer.Sound('Assets/Grenade+1.mp3')
-BULLET_FIRE_SOUND = pygame.mixer.Sound('Assets/Gun+Silencer.mp3')
+BULLET_HIT_SOUND = pygame.mixer.Sound(os.path.join('Assets', 'WoodCrashesDistant FS022705.mp3'))
+BULLET_FIRE_SOUND = pygame.mixer.Sound(os.path.join('Assets', 'LaserBlastQuick PE1095107.mp3'))
+BACKGROUND_SOUND = pygame.mixer.Sound(os.path.join('Assets', 'Max Brhon - Cyberpunk [NCS Release].mp3'))
+pygame.mixer.Sound.set_volume(BACKGROUND_SOUND, 0.4)        
+WINNER_SOUND = pygame.mixer.Sound(os.path.join('Assets', 'mixkit-wrong-answer-bass-buzzer-948.wav'))
 
 HEALTH_FONT = pygame.font.SysFont('comicsans', 40)
 WINNER_FONT = pygame.font.SysFont('comicsans', 100)
+MENU_FONT = pygame.font.SysFont('comicsans', 90)
+MENU_SUB_FONT = pygame.font.SysFont('comicsans', 40)
+MENU_SUB_MINI_FONT = pygame.font.SysFont('comicsans', 28)
 
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))              # window resolution
 pygame.display.set_caption("2-Player Spaceship Game!")      # window title
 
 SPACE = pygame.transform.scale(pygame.image.load(os.path.join('Assets', 'space.png')), (WIDTH, HEIGHT))
+MENU_BACKGROUND = pygame.transform.scale(pygame.image.load(os.path.join('Assets', 'lucas-benjamin-wQLAGv4_OYs-unsplash.jpg')), (WIDTH, HEIGHT))
 
-YELLOW_SPACESHIP_IMAGE = pygame.image.load(os.path.join('Assets', 'spaceship_yellow.png'))
+YELLOW_SPACESHIP_IMAGE = pygame.image.load(os.path.join('Assets', 'yellow.png'))
 YELLOW_SPACESHIP = pygame.transform.rotate(pygame.transform.scale(
-    YELLOW_SPACESHIP_IMAGE, (SPACESHIP_WIDTH,SPACESHIP_HEIGHT)), 90)    # rotate and scale image
+    YELLOW_SPACESHIP_IMAGE, (SPACESHIP_WIDTH,SPACESHIP_HEIGHT)), 270)    # rotate and scale image
 
-RED_SPACESHIP_IMAGE = pygame.image.load(os.path.join('Assets', 'spaceship_red.png'))
+RED_SPACESHIP_IMAGE = pygame.image.load(os.path.join('Assets', 'red.png'))
 RED_SPACESHIP = pygame.transform.rotate(pygame.transform.scale(
-    RED_SPACESHIP_IMAGE, (SPACESHIP_WIDTH,SPACESHIP_HEIGHT)), 270)      # rotate and scale image
+    RED_SPACESHIP_IMAGE, (SPACESHIP_WIDTH,SPACESHIP_HEIGHT)), 90)      # rotate and scale image
+
+
 
 def draw_window(red, yellow, red_bullets, yellow_bullets, red_health, yellow_health):
+    """
+    Draw objects on the window
+
+    Args:
+        red (Rect): To track red ship
+        yellow (Rect): To track yellow ship
+        red_bullets (list): Store bullets
+        yellow_bullets (list): Store bullets
+        red_health (int): Health of red ship
+        yellow_health (int): Health of yellow ship
+    """
     WIN.blit(SPACE, (0,0))
     pygame.draw.rect(WIN, BLACK, BORDER)
 
@@ -68,6 +88,13 @@ def draw_window(red, yellow, red_bullets, yellow_bullets, red_health, yellow_hea
 
 
 def yellow_handle_movement(keys_pressed, yellow):
+    """
+    Handle yellow ship movement
+
+    Args:
+        keys_pressed (): All keys pressed
+        yellow (Rect): To track yellow ship
+    """
     if keys_pressed[pygame.K_a] and (yellow.x - VEL > 0):    # left
         yellow.x -= VEL
     if keys_pressed[pygame.K_d] and (yellow.x + VEL + yellow.width < BORDER.x):    # right
@@ -79,6 +106,13 @@ def yellow_handle_movement(keys_pressed, yellow):
 
 
 def red_handle_movement(keys_pressed, red):
+    """
+    Handle red ship movement
+
+    Args:
+        keys_pressed (): All keys pressed
+        red (Rect): To track red ship
+    """
     if keys_pressed[pygame.K_LEFT] and (red.x - VEL > BORDER.x + BORDER.width):    # left
         red.x -= VEL
     if keys_pressed[pygame.K_RIGHT] and (red.x + VEL + red.width < WIDTH):    # right
@@ -90,6 +124,15 @@ def red_handle_movement(keys_pressed, red):
 
 
 def handle_bullets(yellow_bullets, red_bullets, yellow, red):
+    """
+    Handle Bullet Logic
+
+    Args:
+        yellow_bullets (list): Stores yellow bullets
+        red_bullets (list): Stores red bullets
+        yellow (Rect): To track yellow ships
+        red (Rect): To track red ship
+    """
     for bullet in yellow_bullets:
         bullet.x += BULLET_VEL
         if red.colliderect(bullet):
@@ -106,13 +149,25 @@ def handle_bullets(yellow_bullets, red_bullets, yellow, red):
         elif bullet.x < 0:
             red_bullets.remove(bullet)
 
+
 def draw_winner(text):
+    """
+    Draw Winner
+
+    Args:
+        text (str): Winner Text
+    """
+    WINNER_SOUND.play()
     draw_text = WINNER_FONT.render(text, 1, WHITE)
-    WIN.blit(draw_text, (WIDTH/2 - draw_text.get_width()/2, HEIGHT/2 - draw_text.get_height()/2))
+    WIN.blit(draw_text, (WIDTH//2 - draw_text.get_width()//2, HEIGHT//2 - draw_text.get_height()//2))
     pygame.display.update()
     pygame.time.delay(5000)
 
-def main():
+
+def game():
+    """
+    Game Function
+    """
     red = pygame.Rect(700, 300, SPACESHIP_WIDTH, SPACESHIP_HEIGHT)
     yellow = pygame.Rect(100, 300, SPACESHIP_WIDTH, SPACESHIP_HEIGHT)
 
@@ -130,6 +185,7 @@ def main():
             if event.type == pygame.QUIT:   # To quit when user presses cross window button
                 run = False
                 pygame.quit()
+                sys.exit()
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LCTRL and len(yellow_bullets) < MAX_BULLETS:
@@ -150,6 +206,13 @@ def main():
                 yellow_health -= DAMAGE
                 BULLET_HIT_SOUND.play()
             
+        keys_pressed = pygame.key.get_pressed()     # keys that are currently pressed down
+        yellow_handle_movement(keys_pressed, yellow)
+        red_handle_movement(keys_pressed, red)
+
+        handle_bullets(yellow_bullets, red_bullets, yellow, red)
+
+        draw_window(red, yellow, red_bullets, yellow_bullets, red_health, yellow_health)
 
         winner_text = ""
         if red_health <= 0:
@@ -162,16 +225,102 @@ def main():
             draw_winner(winner_text)
             break
 
-        keys_pressed = pygame.key.get_pressed()     # what keys are currently pressed down
-        yellow_handle_movement(keys_pressed, yellow)
-        red_handle_movement(keys_pressed, red)
 
-        handle_bullets(yellow_bullets, red_bullets, yellow, red)
+def  how_to_play():
+    """
+    How to play window
+    """
+    running = True
+    clock = pygame.time.Clock()     # to refresh display acc to FPS value
+    while running:
+        WIN.fill((0,0,0))
+        mx, my = pygame.mouse.get_pos()
+        button_1 = pygame.Rect(20, 20, 200, 50)
 
-        draw_window(red, yellow, red_bullets, yellow_bullets, red_health, yellow_health)
+        pygame.draw.rect(WIN, WHITE, button_1)
+        draw_text = MENU_SUB_FONT.render("Go Back", 1, BLACK)
+        WIN.blit(draw_text, (50, 32))
+
+        HOW_TO_PLAY_Y1 = "YELLOW SHIP :" 
+        HOW_TO_PLAY_Y2 = "W,A,S,D - Movement,  LCtrl - Fire" 
+        HOW_TO_PLAY_R1 = "RED SHIP :"
+        HOW_TO_PLAY_R2 = "UP,LEFT,DOWN,RIGHT - Movement,  RCtrl - Fire"
+        draw_text_body11 = MENU_SUB_MINI_FONT.render(HOW_TO_PLAY_Y1, 1, WHITE)
+        draw_text_body12 = MENU_SUB_MINI_FONT.render(HOW_TO_PLAY_Y2, 1, WHITE)
+        draw_text_body21 = MENU_SUB_MINI_FONT.render(HOW_TO_PLAY_R1, 1, WHITE)
+        draw_text_body22 = MENU_SUB_MINI_FONT.render(HOW_TO_PLAY_R2, 1, WHITE)
+        WIN.blit(draw_text_body11, (30, HEIGHT//2 - draw_text_body11.get_height()//2 - 70))
+        WIN.blit(draw_text_body12, (30, HEIGHT//2 - draw_text_body12.get_height()//2 - 30))
+        WIN.blit(draw_text_body21, (30, HEIGHT//2 - draw_text_body21.get_height()//2 + 30))
+        WIN.blit(draw_text_body22, (30, HEIGHT//2 - draw_text_body22.get_height()//2 + 70))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1 and button_1.collidepoint((mx, my)):
+                    running = False
+        
+        pygame.display.update()
+        clock.tick(FPS)
 
 
-    main()
+def main_menu():
+    """
+    Main menu of the game
+    """
+    click2 = False
+    clock = pygame.time.Clock()     # to refresh display acc to FPS value
+    while True:
+        clock.tick(FPS)
+        WIN.blit(MENU_BACKGROUND,(0,0))
+        draw_text = MENU_FONT.render("Space Shooter", 1, WHITE)
+        WIN.blit(draw_text, (WIDTH//2 - draw_text.get_width()//2, HEIGHT//2 - draw_text.get_height()//2 - 80))
+
+        draw_text_footer = MENU_SUB_MINI_FONT.render("Developed by Ronik Bhattacharjee", 1, WHITE)
+        WIN.blit(draw_text_footer, (WIDTH//2 - draw_text_footer.get_width()//2, HEIGHT - 60))
+ 
+        mx, my = pygame.mouse.get_pos()
+ 
+        button_1 = pygame.Rect(WIDTH//2 - 100, HEIGHT//2, 200, 50)
+        button_2 = pygame.Rect(WIDTH//2 - 100, HEIGHT//2 + 80, 200, 50)
+
+        if button_1.collidepoint((mx, my)):
+            if click2:
+                game()
+        
+        if button_2.collidepoint((mx, my)):
+            if click2:
+                how_to_play()
+        
+        pygame.draw.rect(WIN, WHITE, button_1)
+        draw_text2 = MENU_SUB_FONT.render("Start", 1, BLACK)
+        WIN.blit(draw_text2, (WIDTH//2 - 35, HEIGHT//2 + 12 , 200, 50))
+
+        pygame.draw.rect(WIN, WHITE, button_2)
+        draw_text3 = MENU_SUB_FONT.render("How to Play", 1, BLACK)
+        WIN.blit(draw_text3, (WIDTH//2 - 80, HEIGHT//2 + 92 , 200, 50))
+ 
+        click2 = False
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    click2 = True
+ 
+        pygame.display.update()
+            
+
 
 if __name__ == "__main__":
-    main()
+    BACKGROUND_SOUND.play()
+    main_menu()
